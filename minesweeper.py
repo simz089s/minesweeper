@@ -2,14 +2,12 @@
 # -*- coding: utf-8 -*-
 #
 #  minesweeper.py
-#
-# https://www.tutorialspoint.com/python/python_gui_programming.htm
-# http://sebsauvage.net/python/gui/
 
 '''
 To do:
 	- Auto-clear empty (0) squares when clicked
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
+	- Add right-click marking
 '''
 
 try:
