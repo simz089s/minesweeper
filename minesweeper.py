@@ -8,6 +8,7 @@ To do:
 	- Auto-clear empty (0) squares when clicked
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
 	- Add right-click marking
+	- Add winning
 '''
 
 try:
