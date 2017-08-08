@@ -5,10 +5,9 @@
 
 '''
 To do:
-	- Auto-clear empty (0) squares when clicked
+	- Reveal all adjacent empty squares (0) when one is clicked (using BFS?)
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
 	- Add winning
-	- Probably re-implement the whole thing using the Zone class properly with buttons as a wrapper
 '''
 
 try:
@@ -71,6 +70,9 @@ i=y=row, j=x=col
 So that when indexing we can do i,j and row,col but this gives us array[y][x]
 '''
 
+total_mines = 0
+squares_left = 1
+
 def check_mines(mines, x, y):
 	"""Check for the number of mines in the 8 surrounding squares."""
 	area = ((x-1,y-1), (x,y-1), (x+1,y-1), (x-1,y), (x+1,y), (x-1,y+1), (x,y+1), (x+1,y+1))
@@ -87,7 +89,8 @@ def create_board(size, mines):
 		y = random.randint(0, size-1)
 		mine_coords.append((x, y))
 	
-	#~ print(mine_coords)
+	global total_mines
+	total_mines = len(mine_coords)
 	
 	board = [[None for j in range(size)] for i in range(size)]
 	
@@ -105,25 +108,38 @@ def print_board(board):
 			print("%3s" % (board[i][j].value), end=' ')
 		print("\n")
 
-def reveal(frame, board, zone):
+def reveal(frame, zone):
 	"""Reveal square on click.
 Lose and exit if the square is a mine."""
 	zone_button = tk.Button(frame, bg="grey", fg="black", height=1, width=2, relief="sunken", text=zone.value)
 	zone_button.grid(row=zone.y, column=zone.x)
+	#~ zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
+	#~ zone_button.config(bg="grey")
+	#~ zone_button.config(relief="sunken")
+	#~ zone_button.config(text=zone.value)
+	#~ zone_button.config(command='')
 	
 	if (zone.value is "M"):
 		tk.messagebox.showinfo("KABOOM", "Stepped on a mine.")
 		exit(0)
+	
+	global squares_left
+	global total_mines
+	squares_left -= 1
+	if (squares_left == total_mines):
+		tk.messagebox.showinfo("CLEAR", "You win!")
+		#~ exit(0)
 
 def mark_zone(event):
 	zone_button = event.widget
 	
-	prev_command = zone_button.cget('command')
-	prev_parent = zone_button.master
-	grid_info = zone_button.grid_info()
+	#~ prev_command = zone_button.cget('command')
+	#~ prev_parent = zone_button.master
+	#~ grid_info = zone_button.grid_info()
 	
-	zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=2)
-	zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	#~ zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=2)
+	#~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	zone_button.configure(bg="dark red")
 	
 	zone_button.config(state="disabled")
 	zone_button.bind('<Button-3>',  unmark_zone)
@@ -131,12 +147,13 @@ def mark_zone(event):
 def unmark_zone(event):
 	zone_button = event.widget
 	
-	prev_command = zone_button.cget('command')
-	prev_parent = zone_button.master
-	grid_info = zone_button.grid_info()
+	#~ prev_command = zone_button.cget('command')
+	#~ prev_parent = zone_button.master
+	#~ grid_info = zone_button.grid_info()
 	
-	zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=2)
-	zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	#~ zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=2)
+	#~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	zone_button.configure(bg="dark blue")
 	
 	zone_button.config(state="normal")
 	zone_button.bind('<Button-3>',  mark_zone)
@@ -151,7 +168,10 @@ Generate board and print it to STDOUT."""
 	except NameError:
 		N = int(input("Board size? "))
 		M = min(abs(int(input("Difficulty (1-3)? "))), 3)
-	board_array = create_board(N, int(N*N*M/10))
+	board_array = create_board(N, int(N*N*M/9+1))
+	global squares_left
+	squares_left = N * N
+	
 	print_board(board_array)
 	
 	top = tk.Tk()
@@ -161,7 +181,7 @@ Generate board and print it to STDOUT."""
 	
 	for i in range(len(board_array)):
 		for j in range(len(board_array[i])):
-			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j]), fg="black", height=1, width=2)
+			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array[i][j]), fg="black", height=1, width=2)
 			zone_button.grid(row=i, column=j)
 			zone_button.bind('<Button-3>',  mark_zone)
 			board_array[i][j].button = zone_button
