@@ -4,10 +4,10 @@
 #  minesweeper.py
 
 '''
-To do:
+To-do:
 	- Reveal all adjacent empty squares (0) when one is clicked (using BFS?)
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
-	- Add winning
+	- Stop console from appearing
 '''
 
 try:
@@ -70,6 +70,7 @@ i=y=row, j=x=col
 So that when indexing we can do i,j and row,col but this gives us array[y][x]
 '''
 
+# Keep track of squares left to win
 total_mines = 0
 squares_left = 1
 
@@ -90,7 +91,7 @@ def create_board(size, mines):
 		mine_coords.append((x, y))
 	
 	global total_mines
-	total_mines = len(mine_coords)
+	total_mines = len(set(mine_coords))
 	
 	board = [[None for j in range(size)] for i in range(size)]
 	
@@ -110,7 +111,8 @@ def print_board(board):
 
 def reveal(frame, zone):
 	"""Reveal square on click.
-Lose and exit if the square is a mine."""
+Lose and exit if the square is a mine.
+Win and disable buttons when all squares except mines are cleared."""
 	zone_button = tk.Button(frame, bg="grey", fg="black", height=1, width=2, relief="sunken", text=zone.value)
 	zone_button.grid(row=zone.y, column=zone.x)
 	#~ zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
@@ -128,9 +130,12 @@ Lose and exit if the square is a mine."""
 	squares_left -= 1
 	if (squares_left == total_mines):
 		tk.messagebox.showinfo("CLEAR", "You win!")
-		#~ exit(0)
+		for b in frame.winfo_children():
+			b.configure(state="disabled")
+			b.unbind("<Button-3>")
 
 def mark_zone(event):
+	"""Mark a square as a mine with right-click."""
 	zone_button = event.widget
 	
 	#~ prev_command = zone_button.cget('command')
@@ -145,6 +150,7 @@ def mark_zone(event):
 	zone_button.bind('<Button-3>',  unmark_zone)
 
 def unmark_zone(event):
+	"""Unmark a square as a mine with right-click."""
 	zone_button = event.widget
 	
 	#~ prev_command = zone_button.cget('command')
