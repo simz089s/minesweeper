@@ -7,8 +7,8 @@
 To do:
 	- Auto-clear empty (0) squares when clicked
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
-	- Add right-click marking
 	- Add winning
+	- Probably re-implement the whole thing using the Zone class properly with buttons as a wrapper
 '''
 
 try:
@@ -47,6 +47,9 @@ class Zone:
 	
 	def y(self):
 		return self._y
+	
+	def button(self):
+		return self.button
 
 '''
    y
@@ -112,13 +115,43 @@ Lose and exit if the square is a mine."""
 		tk.messagebox.showinfo("KABOOM", "Stepped on a mine.")
 		exit(0)
 
+def mark_zone(event):
+	zone_button = event.widget
+	
+	prev_command = zone_button.cget('command')
+	prev_parent = zone_button.master
+	grid_info = zone_button.grid_info()
+	
+	zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=2)
+	zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	
+	zone_button.config(state="disabled")
+	zone_button.bind('<Button-3>',  unmark_zone)
+
+def unmark_zone(event):
+	zone_button = event.widget
+	
+	prev_command = zone_button.cget('command')
+	prev_parent = zone_button.master
+	grid_info = zone_button.grid_info()
+	
+	zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=2)
+	zone_button.grid(row=grid_info["row"], column=grid_info["column"])
+	
+	zone_button.config(state="normal")
+	zone_button.bind('<Button-3>',  mark_zone)
+
 def main_loop():
 	"""Main game loop.
 Generate board and print it to STDOUT."""
 	
-	try: N = int(raw_input("Board size? "))
-	except NameError: N = int(input("Board size? "))
-	board_array = create_board(N, (N*2+1)//3)
+	try:
+		N = int(raw_input("Board size? "))
+		M = min(abs(int(raw_input("Difficulty (1-3)? "))), 3)
+	except NameError:
+		N = int(input("Board size? "))
+		M = min(abs(int(input("Difficulty (1-3)? "))), 3)
+	board_array = create_board(N, int(N*N*M/10))
 	print_board(board_array)
 	
 	top = tk.Tk()
@@ -130,6 +163,8 @@ Generate board and print it to STDOUT."""
 		for j in range(len(board_array[i])):
 			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j]), fg="black", height=1, width=2)
 			zone_button.grid(row=i, column=j)
+			zone_button.bind('<Button-3>',  mark_zone)
+			board_array[i][j].button = zone_button
 	
 	top.mainloop()
 	
