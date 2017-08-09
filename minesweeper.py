@@ -5,7 +5,7 @@
 
 '''
 To-do:
-	- Reveal all adjacent empty squares (0) when one is clicked (using BFS?)
+	- Add timer (and mine count?)
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
 	- Stop console from appearing
 '''
@@ -95,6 +95,9 @@ def create_board(size, mines):
 	
 	board = [[None for j in range(size)] for i in range(size)]
 	
+	global squares_left
+	squares_left = size * size
+	
 	for i in range(size):
 		for j in range(size):
 			if ((j, i) in mine_coords): board[i][j] = Zone(True, "M", j, i)
@@ -109,30 +112,54 @@ def print_board(board):
 			print("%3s" % (board[i][j].value), end=' ')
 		print("\n")
 
-def reveal(frame, zone):
+def clear_adjacent(board, root_zone):
+	queue = [root_zone]
+	visited = set()
+	
+	while (queue):
+		current_zone = queue.pop(0)
+		x = current_zone.x
+		y = current_zone.y
+		neighborhood = ((x-1,y-1), (x,y-1), (x+1,y-1), (x-1,y), (x+1,y), (x-1,y+1), (x,y+1), (x+1,y+1))
+		for n in neighborhood:
+			if (n[0] < 0) or (n[1] < 0): continue
+			try:
+				adjacent_zone = board[n[1]][n[0]]
+				if (adjacent_zone not in visited):
+					if (adjacent_zone.value == 0): queue += [adjacent_zone]
+					if (adjacent_zone.value != 'M'): reveal(adjacent_zone.button.master, board, adjacent_zone, False)
+					visited.add(adjacent_zone)
+			except IndexError: continue
+
+def reveal(frame, board, zone, bfs):
 	"""Reveal square on click.
 Lose and exit if the square is a mine.
 Win and disable buttons when all squares except mines are cleared."""
-	zone_button = tk.Button(frame, bg="grey", fg="black", height=1, width=2, relief="sunken", text=zone.value)
-	zone_button.grid(row=zone.y, column=zone.x)
-	#~ zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
-	#~ zone_button.config(bg="grey")
-	#~ zone_button.config(relief="sunken")
-	#~ zone_button.config(text=zone.value)
-	#~ zone_button.config(command='')
+	#~ zone.button = tk.Button(frame, bg="grey", fg="black", height=1, width=2, relief="sunken", text=zone.value)
+	#~ # zone_button.grid(row=zone.y, column=zone.x)
+	# zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
+	zone.button.config(bg="grey")
+	zone.button.config(relief="sunken")
+	zone.button.config(text=zone.value)
+	zone.button.config(command=None)
+	zone.button.unbind("<Button-3>")
 	
 	if (zone.value is "M"):
 		tk.messagebox.showinfo("KABOOM", "Stepped on a mine.")
 		exit(0)
 	
-	global squares_left
-	global total_mines
-	squares_left -= 1
+	if (not zone.revealed):
+		global squares_left
+		global total_mines
+		squares_left -= 1
+		zone.revealed = True
 	if (squares_left == total_mines):
 		tk.messagebox.showinfo("CLEAR", "You win!")
 		for b in frame.winfo_children():
 			b.configure(state="disabled")
 			b.unbind("<Button-3>")
+	elif (bfs) and (zone.value == 0):
+		clear_adjacent(board, zone)
 
 def mark_zone(event):
 	"""Mark a square as a mine with right-click."""
@@ -148,6 +175,8 @@ def mark_zone(event):
 	
 	zone_button.config(state="disabled")
 	zone_button.bind('<Button-3>',  unmark_zone)
+	
+	zone_button.marked = True
 
 def unmark_zone(event):
 	"""Unmark a square as a mine with right-click."""
@@ -163,20 +192,21 @@ def unmark_zone(event):
 	
 	zone_button.config(state="normal")
 	zone_button.bind('<Button-3>',  mark_zone)
+	
+	zone_button.marked = False
 
 def main_loop():
 	"""Main game loop.
 Generate board and print it to STDOUT."""
 	
 	try:
-		N = int(raw_input("Board size? "))
-		M = min(abs(int(raw_input("Difficulty (1-3)? "))), 3)
+		N = abs(int(raw_input("Board size? ")))
+		M = min(abs(int(raw_input("Difficulty (0-3)? "))), 3)
 	except NameError:
-		N = int(input("Board size? "))
-		M = min(abs(int(input("Difficulty (1-3)? "))), 3)
+		N = abs(int(input("Board size? ")))
+		M = min(abs(int(input("Difficulty (0-3)? "))), 3)
+	N = min(N, 20) # Hard capped at 20 for performance
 	board_array = create_board(N, int(N*N*M/9+1))
-	global squares_left
-	squares_left = N * N
 	
 	print_board(board_array)
 	
@@ -187,7 +217,7 @@ Generate board and print it to STDOUT."""
 	
 	for i in range(len(board_array)):
 		for j in range(len(board_array[i])):
-			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array[i][j]), fg="black", height=1, width=2)
+			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j], True), fg="black", height=1, width=2)
 			zone_button.grid(row=i, column=j)
 			zone_button.bind('<Button-3>',  mark_zone)
 			board_array[i][j].button = zone_button
