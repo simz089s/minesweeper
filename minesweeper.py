@@ -103,7 +103,7 @@ def create_board(size, mines):
 			if ((j, i) in mine_coords): board[i][j] = Zone(True, "M", j, i)
 			else: board[i][j] = Zone(False, check_mines(mine_coords, j, i), j, i)
 	
-	return board
+	return (board, mine_coords)
 
 def print_board(board):
 	"""Print board to STDOUT."""
@@ -112,7 +112,7 @@ def print_board(board):
 			print("%3s" % (board[i][j].value), end=' ')
 		print("\n")
 
-def clear_adjacent(board, root_zone):
+def clear_adjacent(board, root_zone, mine_coords):
 	queue = [root_zone]
 	visited = set()
 	
@@ -127,11 +127,11 @@ def clear_adjacent(board, root_zone):
 				adjacent_zone = board[n[1]][n[0]]
 				if (adjacent_zone not in visited):
 					if (adjacent_zone.value == 0): queue += [adjacent_zone]
-					if (adjacent_zone.value != 'M'): reveal(adjacent_zone.button.master, board, adjacent_zone, False)
+					if (adjacent_zone.value != 'M'): reveal(adjacent_zone.button.master, board, adjacent_zone, False, mine_coords)
 					visited.add(adjacent_zone)
 			except IndexError: continue
 
-def reveal(frame, board, zone, bfs):
+def reveal(frame, board, zone, bfs, mine_coords):
 	"""Reveal square on click.
 Lose and exit if the square is a mine.
 Win and disable buttons when all squares except mines are cleared."""
@@ -146,7 +146,13 @@ Win and disable buttons when all squares except mines are cleared."""
 	
 	if (zone.value is "M"):
 		tk.messagebox.showinfo("KABOOM", "Stepped on a mine.")
-		exit(0)
+		for coord in mine_coords:
+			current_mine_zone = board[coord[1]][coord[0]]
+			current_mine_zone.button.config(bg="dark red")
+			current_mine_zone.button.config(text=current_mine_zone.value)
+		for b in frame.winfo_children():
+			b.configure(state="disabled")
+			b.unbind("<Button-3>")
 	
 	if (not zone.revealed):
 		global squares_left
@@ -159,7 +165,7 @@ Win and disable buttons when all squares except mines are cleared."""
 			b.configure(state="disabled")
 			b.unbind("<Button-3>")
 	if (bfs) and (zone.value == 0):
-		clear_adjacent(board, zone)
+		clear_adjacent(board, zone, mine_coords)
 
 def mark_zone(event):
 	"""Mark a square as a mine with right-click."""
@@ -206,7 +212,7 @@ Generate board and print it to STDOUT."""
 		N = abs(int(input("Board size? ")))
 		M = min(abs(int(input("Difficulty (0-3)? "))), 3)
 	N = min(N, 20) # Hard capped at 20 for performance
-	board_array = create_board(N, int(N*N*M/9+1))
+	(board_array, mine_coords) = create_board(N, int(N*N*M/9+1))
 	
 	print_board(board_array)
 	
@@ -217,7 +223,7 @@ Generate board and print it to STDOUT."""
 	
 	for i in range(len(board_array)):
 		for j in range(len(board_array[i])):
-			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j], True), fg="black", height=1, width=2)
+			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j], True, mine_coords), fg="black", height=1, width=2)
 			zone_button.grid(row=i, column=j)
 			zone_button.bind('<Button-3>',  mark_zone)
 			board_array[i][j].button = zone_button
