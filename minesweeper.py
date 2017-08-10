@@ -1,9 +1,8 @@
-from __future__ import print_function
-
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 #  minesweeper.py
+from __future__ import print_function
 
 '''
 To-do:
