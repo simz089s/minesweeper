@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
@@ -12,10 +14,20 @@ To-do:
 
 try:
 	import Tkinter as tk
-	from Tkinter import messagebox
+	try:
+		from Tkinter import messagebox as tkMessageBox
+		button_width = 2
+	except ImportError:
+		import tkMessageBox
+		button_width = 1
 except ImportError:
 	import tkinter as tk
-	from tkinter import messagebox
+	try:
+		from tkinter import messagebox as tkMessageBox
+		button_width = 2
+	except ImportError:
+		import tkMessageBox
+		button_width = 1
 import random
 
 class Zone:
@@ -135,7 +147,8 @@ def reveal(frame, board, zone, bfs, mine_coords):
 	"""Reveal square on click.
 Lose and exit if the square is a mine.
 Win and disable buttons when all squares except mines are cleared."""
-	#~ zone.button = tk.Button(frame, bg="grey", fg="black", height=1, width=2, relief="sunken", text=zone.value)
+	#~ global button_width
+	#~ zone.button = tk.Button(frame, bg="grey", fg="black", height=1, width=button_width, relief="sunken", text=zone.value)
 	#~ # zone_button.grid(row=zone.y, column=zone.x)
 	# zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
 	zone.button.config(bg="grey")
@@ -145,7 +158,7 @@ Win and disable buttons when all squares except mines are cleared."""
 	zone.button.unbind("<Button-3>")
 	
 	if (zone.value is "M"):
-		tk.messagebox.showinfo("KABOOM", "Stepped on a mine.")
+		tkMessageBox.showinfo("KABOOM", "Stepped on a mine.")
 		for coord in mine_coords:
 			current_mine_zone = board[coord[1]][coord[0]]
 			current_mine_zone.button.config(bg="dark red")
@@ -160,7 +173,7 @@ Win and disable buttons when all squares except mines are cleared."""
 		squares_left -= 1
 		zone.revealed = True
 	if (squares_left == total_mines):
-		tk.messagebox.showinfo("CLEAR", "You win!")
+		tkMessageBox.showinfo("CLEAR", "You win!")
 		for b in frame.winfo_children():
 			b.configure(state="disabled")
 			b.unbind("<Button-3>")
@@ -175,7 +188,8 @@ def mark_zone(event):
 	#~ prev_parent = zone_button.master
 	#~ grid_info = zone_button.grid_info()
 	
-	#~ zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=2)
+	#~ global button_width
+	#~ zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=button_width)
 	#~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
 	zone_button.configure(bg="dark red")
 	
@@ -192,7 +206,8 @@ def unmark_zone(event):
 	#~ prev_parent = zone_button.master
 	#~ grid_info = zone_button.grid_info()
 	
-	#~ zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=2)
+	#~ global button_width
+	#~ zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=button_width)
 	#~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
 	zone_button.configure(bg="dark blue")
 	
@@ -218,12 +233,14 @@ Generate board and print it to STDOUT."""
 	
 	top = tk.Tk()
 	
-	board_frame = tk.Frame(top, bg="white", height=N, width=2*N)
+	global button_width
+	
+	board_frame = tk.Frame(top, bg="white", height=N, width=button_width*N)
 	board_frame.pack()
 	
 	for i in range(len(board_array)):
 		for j in range(len(board_array[i])):
-			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j], True, mine_coords), fg="black", height=1, width=2)
+			zone_button = tk.Button(board_frame, bg="dark blue", command=lambda i=i, j=j:reveal(board_frame, board_array, board_array[i][j], True, mine_coords), fg="black", height=1, width=button_width)
 			zone_button.grid(row=i, column=j)
 			zone_button.bind('<Button-3>',  mark_zone)
 			board_array[i][j].button = zone_button
