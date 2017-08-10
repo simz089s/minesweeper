@@ -7,7 +7,7 @@
 To-do:
 	- Add timer (and mine count?)
 	- Prevent getting mine on first square click (will probably need big rewrite because of the way the board is generated, or just move the mine and update values)
-	- Stop console from appearing
+	- Stop console from appearing (kept for debugging purposes)
 '''
 
 try:
@@ -158,7 +158,7 @@ Win and disable buttons when all squares except mines are cleared."""
 		for b in frame.winfo_children():
 			b.configure(state="disabled")
 			b.unbind("<Button-3>")
-	elif (bfs) and (zone.value == 0):
+	if (bfs) and (zone.value == 0):
 		clear_adjacent(board, zone)
 
 def mark_zone(event):
