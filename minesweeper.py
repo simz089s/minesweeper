@@ -43,6 +43,7 @@ import random
 
 import time
 
+
 class Zone:
     """Represent a single square on the minesweeper board."""
 
@@ -166,8 +167,8 @@ def clear_adjacent(board, root_zone, mine_coords):
                     if (adjacent_zone.value == 0):
                         queue += [adjacent_zone]
                     if (adjacent_zone.value != 'M'):
-                        reveal(adjacent_zone.button.master, board, adjacent_zone
-                               , False, mine_coords)
+                        reveal(adjacent_zone.button.master, board,
+                               adjacent_zone, False, mine_coords)
                     visited.add(adjacent_zone)
             except IndexError:
                 continue
@@ -228,7 +229,7 @@ def mark_zone(event):
     zone_button.configure(bg="dark red")
 
     zone_button.config(state="disabled")
-    zone_button.bind('<Button-3>',  unmark_zone)
+    zone_button.bind('<Button-3>', unmark_zone)
 
     zone_button.marked = True
 
@@ -247,7 +248,7 @@ def unmark_zone(event):
     zone_button.configure(bg="dark blue")
 
     zone_button.config(state="normal")
-    zone_button.bind('<Button-3>',  mark_zone)
+    zone_button.bind('<Button-3>', mark_zone)
 
     zone_button.marked = False
 
@@ -283,7 +284,7 @@ def main_loop():
                                     board_array[i][j], True, mine_coords),
                                     fg="black", height=1, width=button_width)
             zone_button.grid(row=i, column=j)
-            zone_button.bind('<Button-3>',  mark_zone)
+            zone_button.bind('<Button-3>', mark_zone)
             board_array[i][j].button = zone_button
 
     top.mainloop()
