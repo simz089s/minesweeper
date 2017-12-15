@@ -2,30 +2,13 @@
 # -*- coding: utf-8 -*-
 #
 #  minesweeper.py
+'''
+Minesweeper
+'''
 from __future__ import print_function
-
-'''
-To-do:
-    - Add timer (and mine count?)
-    - Prevent getting mine on first square click (will probably need big rewrite
-      because of the way the board is generated, or just move the mine and
-      update values)
-    - Stop console from appearing (kept for debugging purposes)
-'''
-
+import random
 import sys
-platform = sys.platform
-if platform.startswith('linux'):
-    button_width = 1
-elif platform.startswith('win32'):
-    button_width = 2
-elif platform.startswith('cygwin'):
-    button_width = 2
-elif platform.startswith('darwin'):
-    button_width = 1
-else:
-    button_width = 2
-
+import time
 try:
     import Tkinter as tk
     try:
@@ -39,12 +22,29 @@ except ImportError:
     except ImportError:
         import tkMessageBox
 
-import random
+PLATFORM = sys.platform
+if PLATFORM.startswith('linux'):
+    BUTTON_WIDTH = 1
+elif PLATFORM.startswith('win32'):
+    BUTTON_WIDTH = 2
+elif PLATFORM.startswith('cygwin'):
+    BUTTON_WIDTH = 2
+elif PLATFORM.startswith('darwin'):
+    BUTTON_WIDTH = 1
+else:
+    BUTTON_WIDTH = 2
 
-import time
+'''
+To-do:
+    - Add timer (and mine count?)
+    - Prevent getting mine on first square click (will probably need big rewrite
+      because of the way the board is generated, or just move the mine and
+      update values)
+    - Stop console from appearing (kept for debugging purposes)
+'''
 
 
-class Zone:
+class Zone():
     """Represent a single square on the minesweeper board."""
 
     def __init__(self, mine, val, x, y):
@@ -181,8 +181,8 @@ def reveal(frame, board, zone, bfs, mine_coords):
     Lose and exit if the square is a mine.
     Win and disable buttons when all squares except mines are cleared.
     """
-    #~ global button_width
-    #~ zone.button = tk.Button(frame, bg="grey", fg="black", height=1, width=button_width, relief="sunken", text=zone.value)
+    #~ global BUTTON_WIDTH
+    #~ zone.button = tk.Button(frame, bg="grey", fg="black", height=1, width=BUTTON_WIDTH, relief="sunken", text=zone.value)
     #~ # zone_button.grid(row=zone.y, column=zone.x)
     # zone_button = frame.grid_slaves(row=zone.y, column=zone.x)[0]
     zone.button.config(bg="grey")
@@ -223,8 +223,8 @@ def mark_zone(event):
     #~ prev_parent = zone_button.master
     #~ grid_info = zone_button.grid_info()
 
-    #~ global button_width
-    #~ zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=button_width)
+    #~ global BUTTON_WIDTH
+    #~ zone_button = tk.Button(prev_parent, bg="dark red", command=prev_command, fg="black", height=1, width=BUTTON_WIDTH)
     #~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
     zone_button.configure(bg="dark red")
 
@@ -242,8 +242,8 @@ def unmark_zone(event):
     #~ prev_parent = zone_button.master
     #~ grid_info = zone_button.grid_info()
 
-    #~ global button_width
-    #~ zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=button_width)
+    #~ global BUTTON_WIDTH
+    #~ zone_button = tk.Button(prev_parent, bg="dark blue", command=prev_command, fg="black", height=1, width=BUTTON_WIDTH)
     #~ zone_button.grid(row=grid_info["row"], column=grid_info["column"])
     zone_button.configure(bg="dark blue")
 
@@ -272,9 +272,9 @@ def main_loop():
 
     top = tk.Tk()
 
-    global button_width
+    global BUTTON_WIDTH
 
-    board_frame = tk.Frame(top, bg="white", height=N, width=button_width*N)
+    board_frame = tk.Frame(top, bg="white", height=N, width=BUTTON_WIDTH*N)
     board_frame.pack()
 
     for i in range(len(board_array)):
@@ -282,7 +282,7 @@ def main_loop():
             zone_button = tk.Button(board_frame, bg="dark blue", command=lambda
                                     i=i, j=j: reveal(board_frame, board_array,
                                     board_array[i][j], True, mine_coords),
-                                    fg="black", height=1, width=button_width)
+                                    fg="black", height=1, width=BUTTON_WIDTH)
             zone_button.grid(row=i, column=j)
             zone_button.bind('<Button-3>', mark_zone)
             board_array[i][j].button = zone_button
@@ -293,6 +293,9 @@ def main_loop():
 
 
 def main(args):
+    '''
+    Main method.
+    '''
 
     main_loop()
 
@@ -300,5 +303,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    import sys
     sys.exit(main(sys.argv))
