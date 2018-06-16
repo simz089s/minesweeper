@@ -41,6 +41,8 @@ To-do:
       because of the way the board is generated, or just move the mine and
       update values)
     - Stop console from appearing (kept for debugging purposes)
+    - Maybe fix "You win" dialog from appearing multiple times when repeatedly
+      called by BFS revealing (I think)
 '''
 
 
@@ -54,27 +56,7 @@ class Zone():
         self.value = val
         self.x = x
         self.y = y
-
-    def mine(self):
-        return self._mine
-
-    def revealed(self):
-        return self.revealed
-
-    def marked(self):
-        return self.marked
-
-    def value(self):
-        return self._value
-
-    def x(self):
-        return self._x
-
-    def y(self):
-        return self._y
-
-    def button(self):
-        return self.button
+        self.button = None
 
 
 '''
@@ -108,7 +90,7 @@ def check_mines(mines, x, y):
             (x, y+1), (x+1, y+1))
     num_mines = 0
     for neighbor in area:
-        if (neighbor in mines):
+        if neighbor in mines:
             num_mines += 1
     return num_mines
 
@@ -116,10 +98,11 @@ def check_mines(mines, x, y):
 def create_board(size, mines):
     """Generate a random minesweeper board."""
     mine_coords = []
-    for k in range(mines):
+    for _ in range(mines):
         x = random.randint(0, size-1)
         y = random.randint(0, size-1)
-        mine_coords.append((x, y))
+        if (x,y) not in ((0,0), (0,size-1), (size-1,0), (size-1,size-1)):
+            mine_coords.append((x, y))
 
     global total_mines
     total_mines = len(set(mine_coords))
@@ -131,7 +114,7 @@ def create_board(size, mines):
 
     for i in range(size):
         for j in range(size):
-            if ((j, i) in mine_coords):
+            if (j, i) in mine_coords:
                 board[i][j] = Zone(True, "M", j, i)
             else:
                 board[i][j] = Zone(False, check_mines(mine_coords, j, i), j, i)
@@ -140,7 +123,7 @@ def create_board(size, mines):
 
 
 def print_board(board):
-    """Print board to STDOUT."""
+    """Pretty print board to stdout."""
     for i in range(len(board)):
         for j in range(len(board[i])):
             print("%3s" % (board[i][j].value), end=' ')
@@ -152,7 +135,7 @@ def clear_adjacent(board, root_zone, mine_coords):
     queue = [root_zone]
     visited = set()
 
-    while (queue):
+    while queue:
         current_zone = queue.pop(0)
         x = current_zone.x
         y = current_zone.y
@@ -163,10 +146,10 @@ def clear_adjacent(board, root_zone, mine_coords):
                 continue
             try:
                 adjacent_zone = board[n[1]][n[0]]
-                if (adjacent_zone not in visited):
-                    if (adjacent_zone.value == 0):
+                if adjacent_zone not in visited:
+                    if adjacent_zone.value == 0:
                         queue += [adjacent_zone]
-                    if (adjacent_zone.value != 'M'):
+                    if adjacent_zone.value != 'M':
                         reveal(adjacent_zone.button.master, board,
                                adjacent_zone, False, mine_coords)
                     visited.add(adjacent_zone)
@@ -191,7 +174,7 @@ def reveal(frame, board, zone, bfs, mine_coords):
     zone.button.config(command=None)
     zone.button.unbind("<Button-3>")
 
-    if (zone.value is "M"):
+    if zone.value is "M":
         tkMessageBox.showinfo("KABOOM", "Stepped on a mine.")
         for coord in mine_coords:
             current_mine_zone = board[coord[1]][coord[0]]
@@ -201,12 +184,12 @@ def reveal(frame, board, zone, bfs, mine_coords):
             b.configure(state="disabled")
             b.unbind("<Button-3>")
 
-    if (not zone.revealed):
+    if not zone.revealed:
         global squares_left
-        global total_mines
+        # global total_mines
         squares_left -= 1
         zone.revealed = True
-    if (squares_left == total_mines):
+    if squares_left == total_mines:
         tkMessageBox.showinfo("CLEAR", "You win!")
         for b in frame.winfo_children():
             b.configure(state="disabled")
@@ -266,13 +249,11 @@ def main_loop():
         N = abs(int(input("Board size? ")))
         M = min(abs(int(input("Difficulty (0-3)? "))), 3)
     N = min(N, 20)  # Hard capped at 20 for performance
-    (board_array, mine_coords) = create_board(N, int(N*N*M/9+1))
+    board_array, mine_coords = create_board(N, int(N*N*M/9+1))
 
     print_board(board_array)
 
     top = tk.Tk()
-
-    global BUTTON_WIDTH
 
     board_frame = tk.Frame(top, bg="white", height=N, width=BUTTON_WIDTH*N)
     board_frame.pack()
