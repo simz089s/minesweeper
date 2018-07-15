@@ -11,6 +11,10 @@ import sys
 import time
 import pygame
 # from pygame.locals import *
+try:
+    from Tkinter import messagebox as tkMessageBox
+except ImportError:
+    import tkMessageBox
 
 BLACK = (  0,   0,   0)
 WHITE = (255, 255, 255)
@@ -20,7 +24,7 @@ BLUE  = (  0,   0, 255)
 
 width = 20
 height = 20
-margin = 5
+margin = 3
 SIZE = 20
 board = []
 
@@ -43,6 +47,8 @@ pygame.init()
 DISPLAYSURF = pygame.display.set_mode((SIZE*(width+margin)+margin, SIZE*(width+margin)+margin))
 pygame.display.set_caption('Minesweeper')
 clock = pygame.time.Clock()
+pygame.font.init()
+FONT = pygame.font.SysFont('Comic Sans MS', 15)
 
 # Keep track of squares left to win
 total_mines = 0
@@ -51,6 +57,7 @@ squares_left = 1
 
 class Zone():
     """Represent a single square on the minesweeper board."""
+
     def __init__(self, mine, val, x, y, rect):
         self.mine = mine
         self.revealed = False
@@ -60,6 +67,9 @@ class Zone():
         self.y = y
         # self.button = None
         self.rect = rect
+    
+    def get_coords(self):
+        return margin+self.y*(height+margin), margin+self.x*(width+margin)
 
 
 '''
@@ -111,7 +121,7 @@ def generate_board(mines):
 
     global board
     board = [[None for j in range(SIZE)] for i in range(SIZE)]
-    offset = width+margin
+    offset = width+margin # or height+margin
     for i in range(SIZE):
         board.append([])
         for j in range(SIZE):
@@ -248,11 +258,15 @@ def main_loop():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN and pygame.mouse.get_pressed()[0]:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                button = pygame.mouse.get_pressed()
                 pos = pygame.mouse.get_pos()
                 i = pos[0] // (width + margin)
                 j = pos[1] // (height + margin)
-                board[i][j].revealed = True
+                if button[0] and not board[i][j].marked:
+                    board[i][j].revealed = True
+                elif button[2]:
+                    board[i][j].marked = True
         
         # Game logic
 
@@ -266,6 +280,7 @@ def main_loop():
                 color = ()
                 if board[i][j].revealed:
                     color = WHITE
+                    DISPLAYSURF.blit(FONT.render(str(board[i][j].value), True, BLACK), board[i][j].get_coords())
                 elif board[i][j].marked:
                     color = RED
                 else:
